@@ -1,4 +1,4 @@
-from decimal import Decimal # OBS: Decimal funciona como decimal em C#, tem precisão exata.
+from decimal import Decimal, InvalidOperation # OBS: Decimal funciona como decimal em C#, tem precisão exata.
 from exceptions import ScrapingError
 
 def price_sanitizer(price_str: str) -> Decimal:
@@ -14,13 +14,13 @@ def price_sanitizer(price_str: str) -> Decimal:
     price_str = price_str.replace("%", "").strip() # Para caso com procentagem.
     
     try:
-        return Decimal(price_str)  # Verifica se a string é um número válido
-    except ValueError:
-        raise ValueError("Error while sanitizing price")    
+        return Decimal(price_str)  # Verifica se a string é um número válido 
+    except InvalidOperation:
+        raise InvalidOperation(f"Error during conversion of {price_str} to decimal.")
 
 def search_element_verifier(soup, selector: str) -> str:
     """Busca um elemento usando um seletor CSS e verifica se ele existe. 
-    Retorna o texto do elemento se encontrado e lança um ValueError se não for.
+    Retorna o texto do elemento se encontrado e lança um ScrapingError se não for.
     """
 
     element = soup.select_one(selector)
@@ -29,7 +29,7 @@ def search_element_verifier(soup, selector: str) -> str:
     return element.get_text(strip=True)
 
 def search_indicator(indicator: str, soup, table_selector = "#table-indicators div.cell") -> str:
-    """Busca um elemento usando um seletor CSS e verifica se ele existe. 
+    """Busca um elemento dentro de uma tabela co múltiplos elelementos e verifica se ele existe. 
     Retorna o texto do elemento se encontrado e lança um ScrapingError se não for.
     """
 
