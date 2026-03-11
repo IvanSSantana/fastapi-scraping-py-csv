@@ -11,5 +11,11 @@ def test_should_remove_dot():
 def test_should_remove_percent():
     assert price_sanitizer("50%") == Decimal("50")
 
-def test_should_return_0_for_not_numbers():
-    assert price_sanitizer("Olá máquina!") == Decimal("0")
+def test_should_return_none_for_not_numbers():
+    assert price_sanitizer("Olá máquina!") is None
+
+def test_should_return_negative_value():
+    assert price_sanitizer("-R$ 1.234,56") == Decimal("-1234.56")
+
+def test_should_remove_plus():
+    assert price_sanitizer("+  R$ 1.234,56") == Decimal("1234.56")

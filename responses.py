@@ -4,7 +4,8 @@ from decimal import Decimal
 class StockResponse(BaseModel):
     ticker: str
     price: Decimal | None
-    value_variation: Decimal | None
+    value_variation_1y: Decimal | None
+    value_variation_1m: Decimal | None
     pl: Decimal | None
     pvp: Decimal | None
     dividend_yield: Decimal | None

@@ -7,19 +7,30 @@ def price_sanitizer(price_str: str) -> Decimal | None:
     Exemplo:"R$ 1.234,56" -> 1234.56
     """
 
+    if not price_str:
+        return None
+
     # Ajusta valores monetários a tipo flutuante
     price_str = price_str.replace("R$", "").strip()
     price_str = price_str.replace(".", "").replace(",", ".")
 
     price_str = price_str.replace("%", "").strip() # Para caso com procentagem.
+    
+    if "-" in price_str.strip():
+        price_str = price_str.replace("-", "").strip()
 
-    if not price_str:
-        return None
+        try:
+            return -Decimal(price_str)  # Verifica se a string é um número válido e aplica o sinal negativo
+        except InvalidOperation:
+            return None
+        
+    elif "+" in price_str.strip():
+        price_str = price_str.replace("+", "").strip()
     
     try:
         return Decimal(price_str)  # Verifica se a string é um número válido
     except InvalidOperation:
-        return Decimal(0)
+        return None
 
 def search_element_verifier(soup, selector: str) -> str:
     """Busca um elemento usando um seletor CSS e verifica se ele existe. 
@@ -56,4 +67,3 @@ def search_indicator(indicator: str, soup, table_selector = "#table-indicators d
                     return indicator_value
                 
     return "" # Se nenhum indicador for encontrado retorna nada.
-    # raise ScrapingError(f"Indicator '{indicator}' not found in the table.") 

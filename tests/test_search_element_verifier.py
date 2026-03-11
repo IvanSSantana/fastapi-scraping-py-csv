@@ -4,7 +4,7 @@ from utils import search_element_verifier, search_indicator
 from bs4 import BeautifulSoup
 
 
-def search_element_verifier_test_should_return_text_when_element_exists():
+def test_search_element_verifier_should_return_text_when_element_exists():
     html = """
     <html>
         <body>
