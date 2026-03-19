@@ -1,8 +1,8 @@
-import requests
+from urllib import response
 from bs4 import BeautifulSoup
 from exceptions import ScrapingError
 from responses import StockResponse
-from utils import price_sanitizer, search_element_verifier, search_indicator
+from utils import price_sanitizer, search_one_element_verifier, search_indicator
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.service import Service 
 from selenium.webdriver.firefox.webdriver import WebDriver 
@@ -10,6 +10,10 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait 
 from webdriver_manager.firefox import GeckoDriverManager
+from datetime import datetime
+import requests
+from ai import generate_report
+from files import read_pdf
 
 def search_asset(ticker: str):
     url = f"https://investidor10.com.br/acoes/{ticker}/"
@@ -38,9 +42,9 @@ def search_asset(ticker: str):
     # Procura dos atributos para o StockResponse Model
     #TODO: Criar um log para monitoramento de erros.
     try:
-        site_ticker = search_element_verifier(soup, ".name-ticker h1")
-        price = price_sanitizer(search_element_verifier(soup, "div._card.cotacao div._card-body div span.value"))
-        variation_1y = price_sanitizer(search_element_verifier(soup, "div._card.pl div._card-body div span"))
+        site_ticker = search_one_element_verifier(soup, ".name-ticker h1").get_text(strip=True)
+        price = price_sanitizer(search_one_element_verifier(soup, "div._card.cotacao div._card-body div span.value").get_text(strip=True))
+        variation_1y = price_sanitizer(search_one_element_verifier(soup, "div._card.pl div._card-body div span").get_text(strip=True))
 
         img_variation = soup.select_one("div._card.pl div._card-body div img")
         if img_variation:
@@ -93,6 +97,9 @@ def search_asset(ticker: str):
     
     except ScrapingError as error:
         raise ScrapingError(error)
+    
+    finally:        
+        driver.quit()
 
     stock_response = StockResponse(
         ticker=site_ticker,
@@ -113,10 +120,63 @@ def search_asset(ticker: str):
         segment=segment
     )
 
-    return stock_response
+    return stock_response   
+    #TODO: Limitar requisição por mês, evitando criar CSVs desnecessários e sobrecarregar o site. Criar um log para monitoramento de erros e requisições.
 
-# Para testes
+def search_pdfs_asset(ticker: str):
+    url = f"https://investidor10.com.br/acoes/{ticker}/"
+
+    # SETUP DO REQUESTS PARA EVITAR BLOQUEIOS DE ACESSO
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        # "content-type": "application/pdf"
+    }
+    
+    response = requests.get(url, headers=headers)
+    response.encoding = "utf-8"
+    
+    if response.status_code != 200:
+        raise ScrapingError("Error while accessing the website")
+
+    # Setup do leitor/parser do BeautifulSoup para ler o HTML da página
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    try:
+        # Procura dos PDFs na seção de comunicações
+        pdfs_area = search_one_element_verifier(soup, "section#communications-section div.content div.row")
+
+        files_elements = pdfs_area.select("div.col-12 div.communication-card")
+        
+        pdfs_urls = []
+        
+        for file in files_elements:
+            date_of_report = file.select_one("div.card-date span.card-date--content")
+            date_of_report_text = date_of_report.get_text(strip=True) # type: ignore
+
+            if date_of_report:
+                date_of_report = datetime.strptime(date_of_report_text, "%d/%m/%Y")
+                if date_of_report.month <= datetime.now().month - 1: # Considera apenas relatórios do último mês
+                    continue
+
+            file_button = file.select_one("a.btn-download-communication")
+
+            if file_button:
+                file_pdf_link = file_button.get("href")
+
+                if file_pdf_link:
+                    pdfs_urls. append(file_pdf_link)
+
+        return pdfs_urls
+
+    except ScrapingError as error:
+        raise ScrapingError(error)
+    except Exception as e:
+        raise ScrapingError(f"Error while searching for PDFs of management reports: {str(e)}")
+
+# Para debug manual
 if __name__ == "__main__":
+    ...
     # print(search_asset("PETR4").model_dump_json(indent=4))
-    print(search_asset("TAEE4").model_dump_json(indent=4))
-    print(search_asset("ITUB4").model_dump_json(indent=4))
+    # print(search_asset("TAEE4").model_dump_json(indent=4))
+    # print(search_asset("RAIZ4").model_dump_json(indent=4))
+    # print(search_pdfs_asset("PETR4"))

@@ -1,4 +1,5 @@
-from decimal import Decimal, InvalidOperation # OBS: Decimal funciona como decimal em C#, tem precisão exata.
+from decimal import Decimal, InvalidOperation
+from bs4 import Tag # OBS: Decimal funciona como decimal em C#, tem precisão exata.
 from exceptions import ScrapingError
 
 def price_sanitizer(price_str: str) -> Decimal | None:
@@ -14,7 +15,7 @@ def price_sanitizer(price_str: str) -> Decimal | None:
     price_str = price_str.replace("R$", "").strip()
     price_str = price_str.replace(".", "").replace(",", ".")
 
-    price_str = price_str.replace("%", "").strip() # Para caso com procentagem.
+    price_str = price_str.replace("%", "").strip() # Para casos com procentagem.
     
     if "-" in price_str.strip():
         price_str = price_str.replace("-", "").strip()
@@ -32,7 +33,7 @@ def price_sanitizer(price_str: str) -> Decimal | None:
     except InvalidOperation:
         return None
 
-def search_element_verifier(soup, selector: str) -> str:
+def search_one_element_verifier(soup, selector: str) -> Tag:
     """Busca um elemento usando um seletor CSS e verifica se ele existe. 
     Retorna o texto do elemento se encontrado e lança um ScrapingError se não for.
     """
@@ -40,7 +41,7 @@ def search_element_verifier(soup, selector: str) -> str:
     element = soup.select_one(selector)
     if not element:
         raise ScrapingError(f"Element not found for selector: {selector}")
-    return element.get_text(strip=True)
+    return element
 
 def search_indicator(indicator: str, soup, table_selector = "#table-indicators div.cell") -> str:
     """Busca um elemento dentro de uma tabela co múltiplos elelementos e verifica se ele existe. 

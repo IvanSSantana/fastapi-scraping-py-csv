@@ -1,13 +1,17 @@
 import csv
+from datetime import datetime
 import io
-
 from fastapi import FastAPI, Response, status
 from fastapi.responses import FileResponse, StreamingResponse
+from ai import generate_report, summarize_documents
 from exceptions import NoDataForExportError
-from scraping import search_asset
-from export import export_to_csv
+from scraping import search_asset, search_pdfs_asset
+from files import export_to_csv, read_pdf, extract_relevant_lines
+from token_count import TokenCount
 
 app = FastAPI()
+
+#TODO: Implementar autenticação e autorização para proteger as rotas de acesso aos dados dos ativos.
 
 @app.get("/api/v1/{ticker}", status_code=status.HTTP_200_OK)
 async def get_asset(ticker: str, response: Response):
@@ -25,28 +29,43 @@ async def get_asset_csv(ticker: str, response: Response):
     try:
         stock = search_asset(ticker)
 
-        output = io.StringIO() # Memória temporária para armazenar o CSV gerado
-
-        writer = csv.DictWriter(
-            output,
-            fieldnames=stock.model_dump().keys()
-        )
-
-        writer.writeheader()
-        writer.writerow(stock.model_dump())
-
-        output.seek(0) # Volta para o início do arquivo para leitura para a response
+        output = export_to_csv(stock)
 
         response.status_code = status.HTTP_200_OK
         return StreamingResponse(
             output,
             media_type="text/csv",
             headers={
-                "Content-Disposition": f"attachment; filename={ticker}.csv"
+                "Content-Disposition": f"attachment; filename={ticker}{datetime.now().month}{datetime.now().year}.csv"
             }
         )
     except NoDataForExportError as e:
         response.status_code = status.HTTP_404_NOT_FOUND
+        return {"error": str(e)}
+    
+@app.get("/api/v1/report/{ticker}")
+async def get_report(ticker: str, response: Response):
+    #TODO: Salvar análise já salva de imagens do mês e redefinir banco ao virar mês
+    try:
+        print("Procurando relatórios")
+        pdfs_urls = search_pdfs_asset(ticker)
+
+        pdfs_raw_content = []
+        print("Lendo PDFs")
+        
+        for url in pdfs_urls:
+            pdfs_raw_content.append(read_pdf(url))
+        
+        print("Processando chunks localmente")
+
+        print("Resumindo documentos")
+        summarize = summarize_documents(pdfs_raw_content[1])
+        
+        response.status_code = status.HTTP_200_OK
+        return {"urls": pdfs_urls, "content": pdfs_raw_content, "summarize": summarize} # as urls são somente para testes, por enquanto
+    
+    except ValueError as e:
+        response.status_code = status.HTTP_400_BAD_REQUEST
         return {"error": str(e)}
 
 #TODO: Rota POST que recebe um JSON com múltiplos tickers.

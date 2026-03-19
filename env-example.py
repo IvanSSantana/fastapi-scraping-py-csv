@@ -1,0 +1,3 @@
+AUTH_KEY = ""
+HASHING_ALGORITHM = ""
+AI_API_KEY = ""
