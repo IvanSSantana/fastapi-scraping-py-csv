@@ -1,7 +1,7 @@
 from datetime import datetime
 from fastapi import FastAPI, Response, status
 from fastapi.responses import StreamingResponse
-from ai import summarize_documents
+from ai import summarize_documents_to_events, generate_report
 from chunking import batch_chunks, chunk
 from exceptions import NoDataForExportError
 from scraping import search_asset, search_pdfs_asset
@@ -52,27 +52,32 @@ async def get_report(ticker: str, response: Response):
         all_summaries = []
         
         for url in pdfs_urls:
-            if url is not pdfs_urls[0]: # -> para debug manual, mais rápido
-                break
-
+            if url != pdfs_urls[4]: # -> para debug manual, mais rápido
+                continue
+            
+            print(f"URL: {url}")
             doc = read_pdf(url)
 
             print("Chunkeando os documentos")
             chunks = chunk(doc)
             print("Batcheando os documentos")
 
-            for batch in batch_chunks(chunks, batch_size=5):
-                print("Batch ...")
+            for i, batch in enumerate(batch_chunks(chunks)):
+                print(f"Batch {i}")
                 # Chamada da IA
-                summary = summarize_documents(batch)
+                summary = summarize_documents_to_events(batch)
+                print(f"RESUMO {i}: {summary}") # PARA DEBUG
 
                 all_summaries.append(summary)
 
         print("Resumindo documentos")
-        summarize = summarize_documents(all_summaries)
+        summarize = summarize_documents_to_events(all_summaries)
+
+        print("Gerando relatório final")
+        final_report = generate_report(content=summarize) # type: ignore
         
         response.status_code = status.HTTP_200_OK
-        return {"urls": pdfs_urls, "summarize": summarize} # As urls são somente para testes, por enquanto
+        return {"urls": pdfs_urls, "summarize": summarize, "report": final_report} # As urls são somente para testes, por enquanto
     
     except ValueError as e:
         response.status_code = status.HTTP_400_BAD_REQUEST

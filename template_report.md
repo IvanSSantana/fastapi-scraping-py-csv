@@ -11,8 +11,8 @@ Empresa/FII do segmento **{{SEGMENTO}}**, com foco em {{DESCRICAO_RESUMIDA}}.
 ---
 
 ## 📈 Indicadores Fundamentais
-TODO: Fazer uma IA específica somente para ler o CSV ou StockResponse dos indicadores e dizer se estão bons ou ruins
 
+#TODO: Configurar um LLM para fazer somente a interpretação
 | Indicador | Valor | Interpretação |
 |----------|------|--------------|
 | P/L | {{PL}} | {{PL_ANALISE}} |
@@ -25,13 +25,15 @@ TODO: Fazer uma IA específica somente para ler o CSV ou StockResponse dos indic
 
 ## 🧠 Interpretação dos Indicadores
 
+TODO: Fazer uma IA específica somente para ler o CSV ou StockResponse dos indicadores e dizer se estão bons ou ruins
 {{INTERPRETACAO_INDICADORES}}
 
 ---
 
 ## 🗂️ Eventos Corporativos Recentes
 
-{{#EVENTOS}}
+#TODO: Organizar resposta da IA para retornar lista de jsons com campos data e descrição
+{{EVENTOS}}
 - **{{DATA}}** — {{DESCRICAO}}
 {{/EVENTOS}}
 

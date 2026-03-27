@@ -10,13 +10,14 @@ def chunk(doc: DoclingDocument) -> List[str]:
 
     chunks = []
 
-    for chunk in chunk_iter:
+    for i, chunk in enumerate(chunk_iter):
         contextualized_text = chunker.contextualize(chunk=chunk)
+        print(f"CHUNK {i}: {contextualized_text}") # PARA DEBUG
         chunks.append(contextualized_text)
 
     return chunks
 
-def batch_chunks(chunks: List[str], batch_size: int=5):
+def batch_chunks(chunks: List[str], batch_size: int=15):
     """
     Agrupa chunks em lotes para evitar uma chamada de IA por chunk.
     """
