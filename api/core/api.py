@@ -1,13 +1,14 @@
-from datetime import datetime
 from fastapi import FastAPI, Response, status
-from fastapi.responses import StreamingResponse
-from services.ai.ai_services import summarize_documents_to_events, generate_conclusion
-from utils.ai.chunking import batch_chunks, chunk
-from exceptions import NoDataForExportError
+from fastapi.responses import StreamingResponse, FileResponse
+from communication.exceptions import NoDataForExportError
 from services.scraping.scraping import search_asset, search_pdfs_asset
-from services.files.files import export_to_csv, read_pdf, structures_events_to_markdown, generate_markdown_report
-from typing_utils import clean_json_from_ai
+from services.ai.ai_services import summarize_documents_to_events, generate_conclusion
+from services.files.files_services import export_to_csv, read_pdf, generate_markdown_report, save_markdown_report
+from utils.ai.chunking import batch_chunks, chunk
+from utils.typing.typing_utils import clean_json_from_ai
+from utils.files.filter_events import filter_events
 import asyncio
+from datetime import datetime
 
 app = FastAPI()
 
@@ -36,9 +37,10 @@ async def get_asset_csv(ticker: str, response: Response):
             output,
             media_type="text/csv",
             headers={
-                "Content-Disposition": f"attachment; filename={ticker}{datetime.now().month}{datetime.now().year}.csv"
+                "Content-Disposition": f"attachment; filename={ticker}_{datetime.now().month}-{datetime.now().year}.csv"
             }
         )
+    
     except NoDataForExportError as e:
         response.status_code = status.HTTP_404_NOT_FOUND
         return {"error": str(e)}
@@ -56,14 +58,12 @@ async def get_report(ticker: str, response: Response):
         stock, pdfs_urls = await asyncio.gather( # Faz elas rodarem concomitantemente (concorrência)
             stock_task,
             pdfs_urls_task
-        )
+        ) 
         
         print("Lendo PDFs")
         all_events = []
         
         for url in pdfs_urls: 
-            if url != pdfs_urls[4]: # -> para debug manual, mais rápido
-                continue
             
             print(f"URL: {url}")
             doc = read_pdf(url)
@@ -74,10 +74,10 @@ async def get_report(ticker: str, response: Response):
             print("Batcheando os documentos")
 
             for i, batch in enumerate(batch_chunks(chunks)):
-                print(f"Batch {i}")
+                #  print(f"Batch {i}")
                 # Chamada da IA
                 event = summarize_documents_to_events(batch)
-                print(f"EVENTO {i}: {event}") # PARA DEBUG
+                # print(f"EVENTO {i}: {event}") # PARA DEBUG
 
                 all_events.append(event)
 
@@ -88,18 +88,27 @@ async def get_report(ticker: str, response: Response):
             cleaned_event = clean_json_from_ai(event)
             cleaned_all_events.extend(cleaned_event)
 
+        print("Filtrando 10 eventos mais relevantes")
+        filtered_events = filter_events(cleaned_all_events)
+
         print("Gerando relatório final")
-        structures_events_to_markdown(cleaned_all_events)
 
         string_report = generate_markdown_report(
             stock.ticker, 
             stock.segment, # type: ignore
-            stock.model_dump(), # type: ignore
-            cleaned_all_events
+            stock.model_dump(), 
+            events=filtered_events
         )
         
+        file_report_path = save_markdown_report(string_report, stock.ticker)
+
         response.status_code = status.HTTP_200_OK
-        return {"report": string_report} # As urls são somente para testes, por enquanto
+        response.status_code = status.HTTP_200_OK
+        return FileResponse(
+            path=file_report_path,
+            media_type="text/markdown",
+            filename=file_report_path.name
+        )
     
     except ValueError as e:
         response.status_code = status.HTTP_400_BAD_REQUEST

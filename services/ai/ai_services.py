@@ -15,7 +15,74 @@ def summarize_documents_to_events(raw_documents: list, local: bool = True) -> st
         Você é um extrator de eventos corporativos.
 
         OBJETIVO:
-        Extrair os 3 eventos corporativos mais relevantes e impactantes de cada batch.
+        Extrair os 3 eventos corporativos mais relevantes e impactantes de cada batch, priorizando eventos que realmente possam afetar a percepção do investidor, os resultados da empresa ou o valor do ativo.
+
+        CRITÉRIO PRINCIPAL DE RELEVÂNCIA:
+        Considere relevante SOMENTE o que tiver potencial de impactar pelo menos um dos itens abaixo:
+        - receita
+        - lucro
+        - EBITDA
+        - margem
+        - caixa
+        - dívida
+        - dividendos
+        - captação
+        - expansão
+        - fechamento de operação
+        - aquisição
+        - venda de ativos
+        - guidance
+        - investimento relevante
+        - mudança operacional relevante
+        - risco jurídico/regulatório/material
+        - mudança estratégica concreta
+        - percepção de mercado sobre crescimento, risco ou geração de valor
+
+        DESCARTE OBRIGATÓRIO:
+        NÃO considere relevante, salvo se houver efeito econômico concreto explicitamente descrito:
+        - convocação de assembleia
+        - marcação de reunião
+        - eleição de conselheiros
+        - eleição de diretoria
+        - aprovação formal de contas
+        - instalação de comitês
+        - calendário societário
+        - eventos protocolares
+        - comunicados administrativos
+        - reorganizações sem impacto financeiro claro
+        - textos jurídicos sem consequência econômica objetiva
+        - textos repetitivos ou burocráticos
+
+        REGRA FUNDAMENTAL:
+        Se o texto apenas informar que "haverá uma reunião", "será realizada assembleia", "serão votadas matérias" ou "serão examinadas contas", mas NÃO explicar um efeito econômico concreto, trate isso como IRRELEVANTE.
+
+        EXEMPLOS DO QUE DEVE SER IGNORADO:
+        - "Assembleia marcada para 29 de abril"
+        - "Eleição dos membros do conselho"
+        - "Exame das demonstrações financeiras"
+        - "Convocação de reunião"
+        - "Instalação de comitê"
+        Esses itens só devem ser extraídos se vierem acompanhados de uma decisão econômica concreta e material.
+
+        EXEMPLOS DO QUE DEVE SER PRIORIZADO:
+        - aquisição ou venda de ativos
+        - expansão de operação
+        - abertura/fechamento de lojas, unidades, centros ou plantas
+        - guidance revisado
+        - distribuição ou suspensão de dividendos
+        - captação de recursos
+        - redução ou aumento relevante de dívida
+        - mudança relevante de margem/lucro/receita
+        - provisão relevante
+        - contingência relevante
+        - mudança tributária com impacto econômico
+        - investimento material
+        - recompra de ações
+        - follow-on, emissão, debêntures, M&A
+
+        Regras de importância:
+        - Eventos burocráticos, protocolares ou sem consequência econômica clara devem receber importância de 8 a 10, ou serem ignorados.
+        - Eventos com impacto direto em lucro, dívida, caixa, dividendos, crescimento ou risco devem receber importância entre 1 e 4.
 
         REGRAS OBRIGATÓRIAS:
         - Responda SOMENTE em Português do Brasil.
@@ -26,10 +93,17 @@ def summarize_documents_to_events(raw_documents: list, local: bool = True) -> st
         - Preserve todos os valores numéricos, percentuais, datas, indicadores e quantias monetárias.
         - Foque somente em movimentos, decisões, resultados e mudanças da empresa.
         - Se nenhum dado for fornecido, responda exatamente:
-        "Nenhum dado fornecido."
+        "[{{Nenhum dado fornecido.}}]"
         - Se o conteúdo não tiver nada relevante, responda exatamente:
-        "."
+        "[{{Nenhum evento relevante encontrado.}}]"
+        - Priorize eventos que realmente possam afetar a percepção do investidor, os resultados da empresa ou o valor do ativo.
+        
+        CLASSIFICAÇÃO DE IMPORTÂNCIA:
+        A importância vai de 1 a 10:
+        - 1 = altíssimo potencial de impacto econômico / mercado
+        - 10 = impacto praticamente nulo
 
+        
         FORMATO DE SAÍDA:
         SEMPRE Retorne SOMENTE JSON válido.
         NÃO escreva markdown.
@@ -39,7 +113,8 @@ def summarize_documents_to_events(raw_documents: list, local: bool = True) -> st
         {{
             "titulo": "Título do evento",
             "descricao": "Descrição do evento",
-            "impacto": "Impacto do evento para a corporação"
+            "impacto": "Impacto do evento para a corporação",
+            "importancia": "1"
         }}
         Exemplo:
         ""
@@ -47,12 +122,20 @@ def summarize_documents_to_events(raw_documents: list, local: bool = True) -> st
         {{
             "titulo": "Compra de Imóvel",
             "descricao": "O imóvel 'Jor Mansions' foi adquirido por 10 bilhões de dólares.",
-            "impacto": "Possível ampliação operacional e aumento de ativos."
+            "impacto": "Possível ampliação operacional e aumento de ativos.",
+            "importancia": "1"
         }},
         {{
             "titulo": "Expansão de setor",
             "descricao": "A empresa irá expandir em um novo setor, em imóveis, além dos lanches.",
-            "impacto": "Ampliação de mercado clara com provável aumento de distribuição de cotas, entretanto existe risco de fracasso."
+            "impacto": "Ampliação de mercado clara com provável aumento de distribuição de cotas, entretanto existe risco de fracasso.",
+            "importancia": "1"
+        }},
+        {{
+            "titulo": "Reunião de Diretoria",
+            "descricao": "A diretoria da empresa tem reunião marcada para o dia 15 de março.",
+            "impacto": "Impacto nulo devido a nenhum dado direto fornecido imediatamente.",
+            "importancia": "10"
         }}
         ]
         ""

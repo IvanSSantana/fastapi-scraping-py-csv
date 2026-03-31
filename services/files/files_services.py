@@ -1,13 +1,13 @@
 import io
 import csv
 from typing import List
-from exceptions import NoDataForExportError
+from communication.exceptions import NoDataForExportError
 from docling.document_converter import DocumentConverter
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from docling.datamodel.pipeline_options import PdfPipelineOptions
 from docling.datamodel.base_models import InputFormat
 from docling.datamodel.accelerator_options import AcceleratorDevice, AcceleratorOptions
-from responses import StockResponse
+from communication.responses import StockResponse
 from docling_core.types.doc.document import DoclingDocument
 from pathlib import Path
 from datetime import datetime
@@ -66,7 +66,7 @@ def export_to_csv(stock : StockResponse | List[StockResponse]):
     
     return output
 
-def structures_events_to_markdown(events: list[dict]) -> str:
+def structures_events_to_markdown(events: list[dict[str, str]]) -> str:
     """Gera as linhas dos eventos recebidos de forma já limpa."""
     markdown_lines = []
 
@@ -81,14 +81,15 @@ def structures_events_to_markdown(events: list[dict]) -> str:
 
 def generate_markdown_report(
     ticker: str,
-    segmento: str,
-    # descricao_resumida: str,
-    indicadores: dict,
-    eventos: list[dict],
-    # interpretacao_indicadores: str,
-    # analise_ia: str,
-    # conclusao: str,
+    segment: str,
+    # corporate_summarize: str,
+    indicators: dict,
+    events: list[dict[str, str]] ,
+    # indicator_analysis: str,
+    # ai_analysis: str,
+    # conclusion: str,
     template_path: str = "templates/relatorio_acao.md"
+    # template_path: str = "/content/fastapi-scraping-stock-market/services/files/templates/relatorio_acao.md"
 ) -> str:
     """
     Gera o relatório final em Markdown a partir de um template.
@@ -97,28 +98,28 @@ def generate_markdown_report(
     with open(template_path, "r", encoding="utf-8") as file:
         template = file.read() # Arquivo Markdown em String
 
-    eventos_md = structures_events_to_markdown(eventos)
+    eventos_md = structures_events_to_markdown(events)
 
     replacements = {
         "{{TICKER}}": ticker,
         "{{DATA_ATUAL}}": datetime.now().strftime("%d/%m/%Y"),
-        "{{SEGMENTO}}": segmento,
+        "{{SEGMENTO}}": segment,
         # "{{DESCRICAO_RESUMIDA}}": descricao_resumida,
 
-        "{{PL}}": str(indicadores.get("pl")),
-        # "{{PL_ANALISE}}": str(indicadores.get("pl_analise")),
+        "{{PL}}": str(indicators.get("pl")),
+        # "{{PL_ANALISE}}": str(indicators.get("pl_analise")),
 
-        "{{PVP}}": str(indicadores.get("pvp")),
-        # "{{PVP_ANALISE}}": str(indicadores.get("pvp_analise")),
+        "{{PVP}}": str(indicators.get("pvp")),
+        # "{{PVP_ANALISE}}": str(indicators.get("pvp_analise")),
 
-        "{{DY}}": str(indicadores.get("dividend_yield")),
-        # "{{DY_ANALISE}}": str(indicadores.get("dy_analise")),
+        "{{DY}}": str(indicators.get("dividend_yield")),
+        # "{{DY_ANALISE}}": str(indicators.get("dy_analise")),
 
-        "{{ROE}}": str(indicadores.get("roe")),
-        # "{{ROE_ANALISE}}": str(indicadores.get("roe_analise")),
+        "{{ROE}}": str(indicators.get("roe")),
+        # "{{ROE_ANALISE}}": str(indicators.get("roe_analise")),
 
-        "{{ROIC}}": str(indicadores.get("roic")),
-        # "{{ROIC_ANALISE}}": str(indicadores.get("roic_analise")),
+        "{{ROIC}}": str(indicators.get("roic")),
+        # "{{ROIC_ANALISE}}": str(indicators.get("roic_analise")),
 
         # "{{INTERPRETACAO_INDICADORES}}": interpretacao_indicadores,
         "{{EVENTOS}}": eventos_md,
@@ -126,12 +127,12 @@ def generate_markdown_report(
         # "{{CONCLUSAO}}": conclusao,
     }
 
-    for placeholder, value in replacements.items(): # Itera as chaves dos dicionários
+    for placeholder, value in replacements.items(): # Itera as chaves-valores dos dicionários
         template = template.replace(placeholder, value)
 
     return template # Markdown em formato String
 
-def save_markdown_report(markdown_string: str, ticker: str) -> str | None:
+def save_markdown_report(markdown_string: str, ticker: str) -> Path:
     """
     Salva o relatório Markdown string em reports_db/ como arquivo.
     """
@@ -145,7 +146,7 @@ def save_markdown_report(markdown_string: str, ticker: str) -> str | None:
         file.write(markdown_string)
 
     print(file_path)
-    return str(file_path)
+    return file_path
 
 #TODO: Exportar para Excel
 

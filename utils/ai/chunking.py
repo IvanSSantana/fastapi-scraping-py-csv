@@ -12,7 +12,7 @@ def chunk(doc: DoclingDocument) -> List[str]:
 
     for i, chunk in enumerate(chunk_iter):
         contextualized_text = chunker.contextualize(chunk=chunk)
-        print(f"CHUNK {i}: {contextualized_text}") # PARA DEBUG
+        # print(f"CHUNK {i}: {contextualized_text}") # PARA DEBUG
         chunks.append(contextualized_text)
 
     return chunks

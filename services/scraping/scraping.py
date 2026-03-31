@@ -1,9 +1,9 @@
 from urllib import response
 from bs4 import BeautifulSoup
-from exceptions import ScrapingError
-from responses import StockResponse
-from typing_utils import price_sanitizer
-from searching import search_one_element_verifier, search_indicator
+from communication.exceptions import ScrapingError
+from communication.responses import StockResponse
+from utils.typing.typing_utils import price_sanitizer
+from utils.scraping.searching import search_one_element_verifier, search_indicator
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.service import Service 
 from selenium.webdriver.firefox.webdriver import WebDriver 
@@ -14,7 +14,13 @@ from webdriver_manager.firefox import GeckoDriverManager
 from datetime import datetime
 import requests
 
-async def search_asset(ticker: str):
+# SETUP PARA RODAR NO COLAB
+# import google_colab_selenium as gs
+# from webdriver_manager.chrome import ChromeDriverManager
+# from selenium.webdriver.chrome.service import Service 
+# from selenium.webdriver.chrome.webdriver import WebDriver 
+
+async def search_asset(ticker: str) -> StockResponse:
     url = f"https://investidor10.com.br/acoes/{ticker}/"
 
     # SETUP DO BEAUTIFULSOUP
@@ -36,6 +42,7 @@ async def search_asset(ticker: str):
     options = Options()
     options.add_argument("--headless") 
     driver = WebDriver(service=Service(GeckoDriverManager().install()), options=options)
+    # driver = gs.Chrome()
     driver.get(url)
 
     # Procura dos atributos para o StockResponse Model

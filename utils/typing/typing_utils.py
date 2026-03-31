@@ -34,8 +34,8 @@ def price_sanitizer(price_str: str) -> Decimal | None:
     except InvalidOperation:
         return None
     
-def clean_json_from_ai(ai_response: str) -> list[dict]:
-    """Limpa as resposta de IA que devem ter estrutura JSON fixa e as limpa com Regex e até com IA se a anterior falhar."""
+def clean_json_from_ai(ai_response: str) -> list[dict[str, str]]:
+    """Limpa as resposta de IA que devem ter estrutura JSON fixa, retorne uma lista de dicionários e as limpa com Regex e até com IA se a anterior falhar."""
     try:
         parsed_json = json.loads(ai_response)
 

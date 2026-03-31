@@ -1,5 +1,5 @@
 from bs4 import Tag # OBS: Decimal funciona como decimal em C#, tem precisão exata.
-from exceptions import ScrapingError
+from communication.exceptions import ScrapingError
 
 def search_one_element_verifier(soup, selector: str) -> Tag:
     """Busca um elemento usando um seletor CSS e verifica se ele existe. 
