@@ -181,8 +181,10 @@ async def search_pdfs_asset(ticker: str):
 
 # Para debug manual
 if __name__ == "__main__":
+    import asyncio
     ...
     # print(search_asset("PETR4").model_dump_json(indent=4))
     # print(search_asset("TAEE4").model_dump_json(indent=4))
     # print(search_asset("RAIZ4").model_dump_json(indent=4))
-    # print(search_pdfs_asset("PETR4"))
+    petr4 = asyncio.run(search_pdfs_asset("PETR4"))
+    print(petr4)

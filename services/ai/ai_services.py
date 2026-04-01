@@ -17,72 +17,9 @@ def summarize_documents_to_events(raw_documents: list, local: bool = True) -> st
         OBJETIVO:
         Extrair os 3 eventos corporativos mais relevantes e impactantes de cada batch, priorizando eventos que realmente possam afetar a percepção do investidor, os resultados da empresa ou o valor do ativo.
 
-        CRITÉRIO PRINCIPAL DE RELEVÂNCIA:
-        Considere relevante SOMENTE o que tiver potencial de impactar pelo menos um dos itens abaixo:
-        - receita
-        - lucro
-        - EBITDA
-        - margem
-        - caixa
-        - dívida
-        - dividendos
-        - captação
-        - expansão
-        - fechamento de operação
-        - aquisição
-        - venda de ativos
-        - guidance
-        - investimento relevante
-        - mudança operacional relevante
-        - risco jurídico/regulatório/material
-        - mudança estratégica concreta
-        - percepção de mercado sobre crescimento, risco ou geração de valor
-
-        DESCARTE OBRIGATÓRIO:
-        NÃO considere relevante, salvo se houver efeito econômico concreto explicitamente descrito:
-        - convocação de assembleia
-        - marcação de reunião
-        - eleição de conselheiros
-        - eleição de diretoria
-        - aprovação formal de contas
-        - instalação de comitês
-        - calendário societário
-        - eventos protocolares
-        - comunicados administrativos
-        - reorganizações sem impacto financeiro claro
-        - textos jurídicos sem consequência econômica objetiva
-        - textos repetitivos ou burocráticos
-
-        REGRA FUNDAMENTAL:
-        Se o texto apenas informar que "haverá uma reunião", "será realizada assembleia", "serão votadas matérias" ou "serão examinadas contas", mas NÃO explicar um efeito econômico concreto, trate isso como IRRELEVANTE.
-
-        EXEMPLOS DO QUE DEVE SER IGNORADO:
-        - "Assembleia marcada para 29 de abril"
-        - "Eleição dos membros do conselho"
-        - "Exame das demonstrações financeiras"
-        - "Convocação de reunião"
-        - "Instalação de comitê"
-        Esses itens só devem ser extraídos se vierem acompanhados de uma decisão econômica concreta e material.
-
-        EXEMPLOS DO QUE DEVE SER PRIORIZADO:
-        - aquisição ou venda de ativos
-        - expansão de operação
-        - abertura/fechamento de lojas, unidades, centros ou plantas
-        - guidance revisado
-        - distribuição ou suspensão de dividendos
-        - captação de recursos
-        - redução ou aumento relevante de dívida
-        - mudança relevante de margem/lucro/receita
-        - provisão relevante
-        - contingência relevante
-        - mudança tributária com impacto econômico
-        - investimento material
-        - recompra de ações
-        - follow-on, emissão, debêntures, M&A
-
-        Regras de importância:
-        - Eventos burocráticos, protocolares ou sem consequência econômica clara devem receber importância de 8 a 10, ou serem ignorados.
-        - Eventos com impacto direto em lucro, dívida, caixa, dividendos, crescimento ou risco devem receber importância entre 1 e 4.
+        Considere relevante somentoe o que tiver impacto econômic concreto ou potencial como lucro, dívida, dividendos, expansão, risco jurídico/regulatório, relevante estratégia com efeito financeiro, etc.
+        Ignore eventos burocráticos, societários ou administrativos como assembleias, reuniões, eleições, comitês, comunicados protocolares etc., a menos que o texto explicite uma consequência econômica objetiva e material.
+        Na importância, use 1 a 4 para eventos com impacto financeiro direto e 8 a 10 para eventos burocráticos, podendo até ignorá-los totalmente.
 
         REGRAS OBRIGATÓRIAS:
         - Responda SOMENTE em Português do Brasil.
